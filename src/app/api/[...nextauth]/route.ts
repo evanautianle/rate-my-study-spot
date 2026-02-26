@@ -37,4 +37,12 @@ const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
 })
 
-export { handler as GET, handler as POST }
+export { handler as POST }
+
+// Custom GET handler to prevent unsupported GET requests to credentials callback
+export async function GET(req) {
+  return new Response(
+    JSON.stringify({ error: "GET is not supported for this endpoint" }),
+    { status: 405, headers: { "Content-Type": "application/json" } }
+  );
+}

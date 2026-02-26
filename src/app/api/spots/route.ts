@@ -1,6 +1,35 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import CredentialsProvider from "next-auth/providers/credentials"
+import bcrypt from "bcryptjs"
+import User from "@/models/User"
+
+// Inline authOptions for getServerSession
+export const authOptions = {
+  providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: {},
+        password: {},
+      },
+      async authorize(credentials) {
+        await connectDB();
+        const user = await User.findOne({ email: credentials?.email });
+        if (!user) throw new Error("No user found");
+        const isValid = await bcrypt.compare(credentials!.password, user.password);
+        if (!isValid) throw new Error("Invalid password");
+        return {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+        };
+      },
+    }),
+  ],
+  session: { strategy: "jwt" },
+  secret: process.env.NEXTAUTH_SECRET,
+};
 import { connectDB } from "@/lib/db"
 import Spot from "@/models/Spot"
 
@@ -55,40 +84,5 @@ export async function POST(req: Request) {
     return NextResponse.json(spot, { status: 201 })
   } catch (error) {
     return NextResponse.json({ error: "Failed to create spot" }, { status: 500 })
-  }
-}import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../[...nextauth]/route";
-import { connectDB } from "@/lib/db";
-import Spot from "@/models/Spot";
-
-// Protect POST (spot creation) so only logged-in users can create spots
-export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  try {
-    await connectDB();
-    const body = await req.json();
-    const { name, building } = body;
-    if (!name || !building) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
-    const spot = await Spot.create({ name, building });
-    return NextResponse.json(spot, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Failed to create spot" }, { status: 500 });
-  }
-}
-
-// Placeholder for GET (fetch spots)
-export async function GET() {
-  try {
-    await connectDB();
-    const spots = await Spot.find().sort({ createdAt: -1 });
-    return NextResponse.json(spots);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Failed to fetch spots" }, { status: 500 });
   }
 }

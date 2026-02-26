@@ -14,17 +14,10 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         await connectDB()
-
         const user = await User.findOne({ email: credentials?.email })
         if (!user) throw new Error("No user found")
-
-        const isValid = await bcrypt.compare(
-          credentials!.password,
-          user.password
-        )
-
+        const isValid = await bcrypt.compare(credentials!.password, user.password)
         if (!isValid) throw new Error("Invalid password")
-
         return {
           id: user._id.toString(),
           name: user.name,
@@ -37,12 +30,4 @@ const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
 })
 
-export { handler as POST }
-
-// Custom GET handler to prevent unsupported GET requests to credentials callback
-export async function GET(req) {
-  return new Response(
-    JSON.stringify({ error: "GET is not supported for this endpoint" }),
-    { status: 405, headers: { "Content-Type": "application/json" } }
-  );
-}
+export { handler as GET, handler as POST }

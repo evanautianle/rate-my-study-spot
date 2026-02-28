@@ -15,6 +15,9 @@ export default function Navbar() {
             <Link href="/" className="hover:underline">Rate My Study Spot</Link>
           </CardTitle>
           <div className="flex items-center gap-4">
+            <Button variant="ghost" asChild>
+              <Link href="/add-spot">Add Spot</Link>
+            </Button>
             {session ? (
               <>
                 <span className="text-sm text-muted-foreground">Hi, {session.user?.name}</span>

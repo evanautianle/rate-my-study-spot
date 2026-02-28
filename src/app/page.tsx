@@ -41,10 +41,7 @@ export default function Home() {
           <CardTitle className="text-3xl font-bold text-center">Study Spots</CardTitle>
         </CardHeader>
         <CardContent className="pt-2 space-y-8">
-          {/* Spot creation form for logged-in users */}
-          {status === "loading" ? null : session ? (
-            <SpotForm onCreated={fetchSpots} />
-          ) : null}
+          {/* SpotForm removed from homepage. Use Add Spot page instead. */}
 
           {loading ? (
             <p className="text-center text-muted-foreground">Loading...</p>

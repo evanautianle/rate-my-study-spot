@@ -45,6 +45,40 @@ export async function GET() {
       .lean();
     return NextResponse.json(spots)
   } catch (error) {
-    return NextResponse.json({ error: "Failed to create spot" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch spots" }, { status: 500 })
+  }
+}
+
+// POST: Create a new study spot
+export async function POST(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { name, building } = body;
+
+    if (!name || !building) {
+      return NextResponse.json({ error: "Name and building are required" }, { status: 400 });
+    }
+
+    await connectDB();
+
+    const newSpot = new Spot({
+      name,
+      building,
+      ratings: [],
+      comments: []
+    });
+
+    await newSpot.save();
+
+    return NextResponse.json(newSpot, { status: 201 });
+  } catch (error) {
+    console.error("Error creating spot:", error);
+    return NextResponse.json({ error: "Failed to create spot" }, { status: 500 });
   }
 }

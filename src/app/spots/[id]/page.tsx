@@ -1,0 +1,77 @@
+"use client";
+import { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import SpotRatingCommentForm from "@/components/SpotRatingCommentForm";
+
+import { use } from "react";
+export default function SpotDetailPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+  const awaitedParams = typeof (params as any).then === "function" ? use(params as Promise<{ id: string }>) : params as { id: string };
+  const [spot, setSpot] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchSpot() {
+      setLoading(true);
+      const res = await fetch(`/api/spots/${awaitedParams.id}`);
+      const data = await res.json();
+      setSpot(data);
+      setLoading(false);
+    }
+    fetchSpot();
+  }, [awaitedParams.id]);
+
+  if (loading) return <div className="w-full max-w-2xl mx-auto mt-8">Loading...</div>;
+  if (!spot || spot.error) return <div className="w-full max-w-2xl mx-auto mt-8">Spot not found.</div>;
+
+  const avgRating = spot.ratings.length
+    ? (spot.ratings.reduce((sum: number, r: any) => sum + (r.value ?? 0), 0) / spot.ratings.length).toFixed(1)
+    : "N/A";
+
+  return (
+    <div className="w-full max-w-2xl mx-auto mt-8">
+      <Card>
+        <CardContent className="p-6">
+          <h1 className="text-2xl font-bold mb-2">{spot.name}</h1>
+          <p className="text-zinc-600 dark:text-zinc-300 mb-2">Building: {spot.building}</p>
+          <p className="text-zinc-500 text-sm mb-4">Average Rating: {avgRating}</p>
+          <SpotRatingCommentForm spotId={spot._id?.toString()} onSuccess={() => window.location.reload()} />
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-2">Ratings</h2>
+            {spot.ratings.length === 0 ? (
+              <p className="text-zinc-400">No ratings yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {spot.ratings.map((r: any, idx: number) => (
+                  <li key={r._id || idx} className="border rounded p-2">
+                    <div className="text-sm">Overall: {r.value}</div>
+                    {r.noise !== undefined && <div className="text-xs">Noise: {r.noise}</div>}
+                    {r.comfort !== undefined && <div className="text-xs">Comfort: {r.comfort}</div>}
+                    {r.outletAvailability !== undefined && <div className="text-xs">Outlet: {['N/A','Poor','Mediocre','Good'][r.outletAvailability]}</div>}
+                    {r.wifiConnection !== undefined && <div className="text-xs">WiFi: {['N/A','Poor','Mediocre','Good'][r.wifiConnection]}</div>}
+                    {r.userId && r.userId.name && <div className="text-xs text-zinc-500">by {r.userId.name}</div>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold mb-2">Comments</h2>
+            {spot.comments.length === 0 ? (
+              <p className="text-zinc-400">No comments yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {spot.comments.map((c: any, idx: number) => (
+                  <li key={c._id || idx} className="border rounded p-2">
+                    <div className="text-sm">{c.text}</div>
+                    {c.userId && c.userId.name && <div className="text-xs text-zinc-500">by {c.userId.name}</div>}
+                    {c.createdAt && <div className="text-xs text-zinc-400">{new Date(c.createdAt).toLocaleString()}</div>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

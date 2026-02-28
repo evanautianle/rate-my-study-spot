@@ -1,3 +1,20 @@
+// GET: Fetch a single study spot by ID
+export async function GET(req: Request, { params }: { params: { id: string } }) {
+  try {
+    await connectDB();
+    const awaitedParams = typeof params.then === "function" ? await params : params;
+    const spot = await Spot.findById(awaitedParams.id)
+      .populate("ratings.userId", "name email")
+      .populate("comments.userId", "name email")
+      .lean();
+    if (!spot) {
+      return NextResponse.json({ error: "Spot not found" }, { status: 404 });
+    }
+    return NextResponse.json(spot);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to fetch spot" }, { status: 500 });
+  }
+}
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../route";

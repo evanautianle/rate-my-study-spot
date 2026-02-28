@@ -3,9 +3,10 @@ import mongoose, { Schema, models } from "mongoose";
 // Sub-schema for individual ratings
 const RatingSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  noise: { type: Number, min: 1, max: 5, required: true },
+  quietness: { type: Number, min: 1, max: 5, required: true },
   comfort: { type: Number, min: 1, max: 5, required: true },
-  outletAvailability: { type: Number, enum: [0, 1, 2, 3, 4], required: true }, // 0=N/A
+  seatAvailability: { type: Number, enum: [0, 1, 2, 3, 4], required: true }, // 0=N/A, 4=Excellent
+  outletAvailability: { type: Number, enum: [0, 1, 2, 3], required: true }, // 0=N/A
   wifiConnection: { type: Number, enum: [0, 1, 2, 3, 4], required: true },   // 0=N/A
   overallRating: { type: Number, min: 1, max: 5, required: true }, // pre-calculated
   createdAt: { type: Date, default: Date.now },

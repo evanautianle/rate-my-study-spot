@@ -30,7 +30,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 
     const { rating, comment } = await req.json();
-    if (!rating && !comment) {
+    if (rating === undefined && comment === undefined) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
@@ -48,8 +48,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       return NextResponse.json({ error: "Spot not found" }, { status: 404 });
     }
 
-    // Add or update rating (single value for now)
-    if (rating) {
+    // Add or update rating
+    if (rating !== undefined) {
       if (typeof rating !== "number" || rating < 1 || rating > 5) {
         return NextResponse.json({ error: "Rating must be 1-5" }, { status: 400 });
       }
@@ -58,7 +58,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 
     // Add comment
-    if (comment) {
+    if (comment !== undefined) {
       if (typeof comment !== "string" || comment.trim().length === 0) {
         return NextResponse.json({ error: "Comment required" }, { status: 400 });
       }

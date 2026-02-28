@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import SpotRatingCommentForm from "@/components/SpotRatingCommentForm";
+import SpotRatingForm from "@/components/SpotRatingForm";
+import SpotCommentForm from "@/components/SpotCommentForm";
 
 import { use } from "react";
 export default function SpotDetailPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
@@ -34,7 +35,8 @@ export default function SpotDetailPage({ params }: { params: Promise<{ id: strin
           <h1 className="text-2xl font-bold mb-2">{spot.name}</h1>
           <p className="text-zinc-600 dark:text-zinc-300 mb-2">Building: {spot.building}</p>
           <p className="text-zinc-500 text-sm mb-4">Average Rating: {avgRating}</p>
-          <SpotRatingCommentForm spotId={spot._id?.toString()} onSuccess={() => window.location.reload()} />
+          <SpotRatingForm spotId={spot._id?.toString()} onSuccess={() => window.location.reload()} />
+          <SpotCommentForm spotId={spot._id?.toString()} onSuccess={() => window.location.reload()} />
           <div className="mb-6">
             <h2 className="text-lg font-semibold mb-2">Ratings</h2>
             {spot.ratings.length === 0 ? (

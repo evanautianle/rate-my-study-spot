@@ -68,40 +68,107 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 // PATCH: Add rating and/or comment to a spot
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const body = await req.json();
+    console.log("PATCH request body:", body);
+    const { quietness, comfort, seatAvailability, outletAvailability, wifiConnection, rating, comment } = body;
 
-    const { rating, comment } = await req.json();
-    if (rating === undefined && comment === undefined) {
+    // Debug the specific values we're concerned about
+    console.log("Rating values debug:", {
+      seatAvailability,
+      outletAvailability,
+      wifiConnection,
+      seatAvailabilityType: typeof seatAvailability,
+      outletAvailabilityType: typeof outletAvailability,
+      wifiConnectionType: typeof wifiConnection
+    });
+
+    // At least one field must be present
+    if (
+      rating === undefined &&
+      quietness === undefined &&
+      comfort === undefined &&
+      seatAvailability === undefined &&
+      outletAvailability === undefined &&
+      wifiConnection === undefined &&
+      comment === undefined
+    ) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
     await connectDB();
-    // Get userId from email
-    const user = await import("@/models/User").then(m => m.default.findOne({ email: session.user.email }));
+    console.log("Database connected");
+    
+    // Get session and userId
+    const patchSession = await getServerSession(authOptions);
+    console.log("Session retrieved:", patchSession ? "Session exists" : "No session");
+    
+    if (!patchSession || !patchSession.user || !patchSession.user.email) {
+      console.log("Authentication failed - no valid session");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    const user = await import("@/models/User").then(m => m.default.findOne({ email: patchSession.user.email }));
+    console.log("User found:", user ? "Yes" : "No");
+    
     if (!user) {
+      console.log("User not found in database");
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
     const userId = user._id;
 
     const awaitedParams = typeof params.then === "function" ? await params : params;
+    console.log("Spot ID from params:", awaitedParams.id);
+    
     const spot = await Spot.findById(awaitedParams.id);
+    console.log("Spot found:", spot ? "Yes" : "No");
+    
     if (!spot) {
+      console.log("Spot not found in database");
       return NextResponse.json({ error: "Spot not found" }, { status: 404 });
     }
 
-    // Add or update rating
-    if (rating !== undefined) {
-      if (typeof rating !== "number" || rating < 1 || rating > 5) {
-        return NextResponse.json({ error: "Rating must be 1-5" }, { status: 400 });
+    // Remove existing rating by this user
+    spot.ratings = spot.ratings.filter((r: any) => r.userId.toString() !== userId.toString());
+
+    // Only add a rating if any rating field is present
+    if (
+      rating !== undefined ||
+      quietness !== undefined ||
+      comfort !== undefined ||
+      seatAvailability !== undefined ||
+      outletAvailability !== undefined ||
+      wifiConnection !== undefined
+    ) {
+      // Validate all required fields are 1-5
+      const allFields = { quietness, comfort, seatAvailability, outletAvailability, wifiConnection };
+      for (const [field, value] of Object.entries(allFields)) {
+        if (!value || value < 1 || value > 5) {
+          return NextResponse.json({ error: `${field} must be between 1-5` }, { status: 400 });
+        }
       }
-      spot.ratings = spot.ratings.filter((r: any) => r.userId.toString() !== userId.toString());
-      spot.ratings.push({ userId, value: rating });
+
+      const newRating = {
+        userId,
+        value: Number(rating) || 1,
+        quietness: Number(quietness),
+        comfort: Number(comfort),
+        seatAvailability: Number(seatAvailability),
+        outletAvailability: Number(outletAvailability),
+        wifiConnection: Number(wifiConnection),
+        overallRating: Number(rating) || 1,
+      };
+      console.log("Creating new rating with types:", {
+        ...newRating,
+        seatAvailabilityType: typeof newRating.seatAvailability,
+        outletAvailabilityType: typeof newRating.outletAvailability,
+        wifiConnectionType: typeof newRating.wifiConnection,
+      });
+      
+      spot.ratings.push(newRating);
+      console.log("Rating added to spot. Total ratings:", spot.ratings.length);
     }
 
-    // Add comment
+    // Add comment if provided
     if (comment !== undefined) {
       if (typeof comment !== "string" || comment.trim().length === 0) {
         return NextResponse.json({ error: "Comment required" }, { status: 400 });
@@ -109,9 +176,26 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       spot.comments.push({ userId, text: comment });
     }
 
-    await spot.save();
+    try {
+      console.log("Saving spot with ratings:", spot.ratings);
+      console.log("Spot ID:", spot._id);
+      await spot.save();
+      console.log("Spot saved successfully");
+    } catch (err) {
+      console.error("Mongoose save error:", err);
+      console.error("Spot data that failed to save:", JSON.stringify(spot, null, 2));
+      throw err;
+    }
     return NextResponse.json({ success: true, spot });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to update spot" }, { status: 500 });
+    console.error("PATCH request error:", error);
+    console.error("Error details:", {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    });
+    return NextResponse.json({ 
+      error: "Failed to update spot",
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

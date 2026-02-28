@@ -5,6 +5,7 @@ import SpotRatingForm from "@/components/SpotRatingForm";
 import SpotCommentForm from "@/components/SpotCommentForm";
 
 import { use } from "react";
+
 export default function SpotDetailPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
 
   const awaitedParams = typeof (params as any).then === "function" ? use(params as Promise<{ id: string }>) : params as { id: string };
@@ -25,7 +26,6 @@ export default function SpotDetailPage({ params }: { params: Promise<{ id: strin
   }, [awaitedParams.id]);
 
   useEffect(() => {
-    // Fetch current session for user id
     async function fetchSession() {
       const res = await fetch("/api/auth/session");
       if (res.ok) {
@@ -47,7 +47,6 @@ export default function SpotDetailPage({ params }: { params: Promise<{ id: strin
       if (!res.ok) {
         // Optionally handle error
       }
-      // Refresh spot data
       const refreshed = await fetch(`/api/spots/${awaitedParams.id}`);
       const data = await refreshed.json();
       setSpot(data);
@@ -59,19 +58,45 @@ export default function SpotDetailPage({ params }: { params: Promise<{ id: strin
   if (loading) return <div className="w-full max-w-2xl mx-auto mt-8">Loading...</div>;
   if (!spot || spot.error) return <div className="w-full max-w-2xl mx-auto mt-8">Spot not found.</div>;
 
-  const avgRating = spot.ratings.length
-    ? (spot.ratings.reduce((sum: number, r: any) => sum + (r.value ?? 0), 0) / spot.ratings.length).toFixed(1)
+  // Calculate averages per section (simple average for all fields)
+  const sectionKeys = ["quietness", "comfort", "seatAvailability", "outletAvailability", "wifiConnection"];
+  const sectionAverages: Record<string, string> = {};
+  sectionKeys.forEach((key) => {
+    const vals = spot.ratings.map((r: any) => r[key]).filter((v: any) => v !== null && v !== undefined);
+    sectionAverages[key] = vals.length ? (vals.reduce((a: number, b: number) => a + b, 0) / vals.length).toFixed(1) : "N/A";
+  });
+
+  // Overall average
+  const overallAvg = spot.ratings.length
+    ? (spot.ratings.reduce((sum: number, r: any) => sum + (r.overallRating ?? 0), 0) / spot.ratings.length).toFixed(1)
     : "N/A";
 
   return (
-    <div className="w-full max-w-2xl mx-auto mt-8">
+    <div className="w-full max-w-2xl mx-auto mt-8 space-y-6">
       <Card>
-        <CardContent className="p-6">
-          <h1 className="text-2xl font-bold mb-2">{spot.name}</h1>
-          <p className="text-zinc-600 dark:text-zinc-300 mb-2">Building: {spot.building}</p>
-          <p className="text-zinc-500 text-sm mb-4">Average Rating: {avgRating}</p>
+        <CardContent className="p-6 space-y-4">
+          <h1 className="text-2xl font-bold">{spot.name}</h1>
+          <p className="text-zinc-600 dark:text-zinc-300">Building: {spot.building}</p>
+
+          {/* Overall average */}
+          <div className="text-3xl font-bold text-center my-2">
+            {overallAvg !== "N/A" ? overallAvg : "No ratings yet"}
+          </div>
+
+          {/* Section averages */}
+          <div className="grid grid-cols-2 gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+            {sectionKeys.map((key) => (
+              <div key={key} className="flex justify-between">
+                <span className="capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                <span>{sectionAverages[key]}</span>
+              </div>
+            ))}
+          </div>
+
           <SpotRatingForm spotId={spot._id?.toString()} onSuccess={() => window.location.reload()} />
           <SpotCommentForm spotId={spot._id?.toString()} onSuccess={() => window.location.reload()} />
+
+          {/* Comments */}
           <div>
             <h2 className="text-lg font-semibold mb-2">Comments</h2>
             {spot.comments.length === 0 ? (

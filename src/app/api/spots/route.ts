@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+import { SessionStrategy } from "next-auth";
 import bcrypt from "bcryptjs"
 import User from "@/models/User"
 
@@ -27,7 +28,7 @@ export const authOptions = {
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt" as SessionStrategy },
   secret: process.env.NEXTAUTH_SECRET,
 };
 import { connectDB } from "@/lib/db"

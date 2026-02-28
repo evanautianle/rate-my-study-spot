@@ -1,33 +1,39 @@
 "use client";
-import { Button } from "@/components/ui/button";
+import * as React from "react";
+import { Button } from "@/components/ui/button"; // your ShadCN Button import
 
 interface RatingSelectorProps {
   label: string;
   value: number | null;
-  options: number[] | { label: string; value: number }[];
-  onChange: (val: number) => void;
+  options: Array<number | { label: string; value: number }>;
+  onChange: (value: number) => void;
   loading?: boolean;
 }
 
-export function RatingSelector({ label, value, options, onChange, loading }: RatingSelectorProps) {
+export function RatingSelector({
+  label,
+  value,
+  options,
+  onChange,
+  loading = false,
+}: RatingSelectorProps) {
   return (
-    <div className="flex items-center gap-2">
-      <label className="font-medium text-sm text-black dark:text-white">{label}:</label>
-      <div className="flex gap-1">
-        {options.map(opt => {
-          const val = typeof opt === "number" ? opt : opt.value;
-          const labelText = typeof opt === "number" ? opt : opt.label;
+    <div className="flex flex-col gap-2">
+      <span className="font-medium">{label}</span>
+      <div className="flex gap-2 flex-wrap">
+        {options.map((opt) => {
+          const optionValue = typeof opt === "number" ? opt : opt.value;
+          const optionLabel = typeof opt === "number" ? opt : opt.label;
+
           return (
             <Button
-              key={val}
-              type="button"
-              variant={value === val ? "default" : "outline"}
-              className={`h-8 px-2 py-1 border-zinc-300 dark:border-zinc-700 ${value === val ? "bg-black text-white" : "bg-white text-black"}`}
-              onClick={() => onChange(val)}
+              key={optionValue}
+              variant={value === optionValue ? "default" : "outline"} // highlight selected
+              size="sm"
+              onClick={() => onChange(optionValue)}
               disabled={loading}
-              aria-label={`${label} ${labelText}`}
             >
-              {labelText}
+              {optionLabel}
             </Button>
           );
         })}

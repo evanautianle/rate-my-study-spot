@@ -6,9 +6,12 @@ import SpotCommentForm from "@/components/SpotCommentForm";
 
 import { use } from "react";
 export default function SpotDetailPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+
   const awaitedParams = typeof (params as any).then === "function" ? use(params as Promise<{ id: string }>) : params as { id: string };
   const [spot, setSpot] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+  const [session, setSession] = useState<any>(null);
 
   useEffect(() => {
     async function fetchSpot() {
@@ -20,6 +23,38 @@ export default function SpotDetailPage({ params }: { params: Promise<{ id: strin
     }
     fetchSpot();
   }, [awaitedParams.id]);
+
+  useEffect(() => {
+    // Fetch current session for user id
+    async function fetchSession() {
+      const res = await fetch("/api/auth/session");
+      if (res.ok) {
+        const data = await res.json();
+        setSession(data);
+      }
+    }
+    fetchSession();
+  }, []);
+
+  async function handleDeleteComment(commentId: string) {
+    setDeletingCommentId(commentId);
+    try {
+      const res = await fetch(`/api/spots/${awaitedParams.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commentId }),
+      });
+      if (!res.ok) {
+        // Optionally handle error
+      }
+      // Refresh spot data
+      const refreshed = await fetch(`/api/spots/${awaitedParams.id}`);
+      const data = await refreshed.json();
+      setSpot(data);
+    } finally {
+      setDeletingCommentId(null);
+    }
+  }
 
   if (loading) return <div className="w-full max-w-2xl mx-auto mt-8">Loading...</div>;
   if (!spot || spot.error) return <div className="w-full max-w-2xl mx-auto mt-8">Spot not found.</div>;
@@ -62,13 +97,27 @@ export default function SpotDetailPage({ params }: { params: Promise<{ id: strin
               <p className="text-zinc-400">No comments yet.</p>
             ) : (
               <ul className="space-y-2">
-                {spot.comments.map((c: any, idx: number) => (
-                  <li key={c._id || idx} className="border rounded p-2">
-                    <div className="text-sm">{c.text}</div>
-                    {c.userId && c.userId.name && <div className="text-xs text-zinc-500">by {c.userId.name}</div>}
-                    {c.createdAt && <div className="text-xs text-zinc-400">{new Date(c.createdAt).toLocaleString()}</div>}
-                  </li>
-                ))}
+                {spot.comments.map((c: any, idx: number) => {
+                  const isOwnComment = session?.user && c.userId && c.userId.email === session.user.email;
+                  return (
+                    <li key={c._id || idx} className="border rounded p-2 flex justify-between items-center">
+                      <div>
+                        <div className="text-sm">{c.text}</div>
+                        {c.userId && c.userId.name && <div className="text-xs text-zinc-500">by {c.userId.name}</div>}
+                        {c.createdAt && <div className="text-xs text-zinc-400">{new Date(c.createdAt).toLocaleString()}</div>}
+                      </div>
+                      {isOwnComment && (
+                        <button
+                          className="ml-4 px-2 py-1 text-xs bg-black text-white rounded hover:bg-zinc-800 disabled:opacity-50"
+                          disabled={deletingCommentId === c._id?.toString()}
+                          onClick={() => handleDeleteComment(c._id?.toString())}
+                        >
+                          {deletingCommentId === c._id?.toString() ? "Deleting..." : "Delete"}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>

@@ -1,6 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import SpotRatingCommentForm from "./SpotRatingCommentForm";
 
 export type Spot = {
   _id: string;

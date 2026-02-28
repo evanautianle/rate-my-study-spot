@@ -1,6 +1,6 @@
-
 import Providers from "./providers"
 import Navbar from "@/components/Navbar"
+import "./globals.css"
 
 export default function RootLayout({
   children,
@@ -9,10 +9,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className="min-h-screen bg-muted/40 antialiased">
         <Providers>
           <Navbar />
-          {children}
+          <main className="max-w-4xl mx-auto px-6 py-10">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>

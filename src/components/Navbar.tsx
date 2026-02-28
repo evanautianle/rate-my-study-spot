@@ -3,31 +3,38 @@
 import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function Navbar() {
-  const { data: session } = useSession()
-
+  const { data: session } = useSession();
   return (
-    <div className="flex justify-between p-4 border-b">
-      <Link href="/" className="font-bold">
-        Rate My Study Spot
-      </Link>
-
-      <div className="space-x-4">
-        {session ? (
-          <>
-            <span className="text-sm">Hi, {session.user?.name}</span>
-            <Button variant="outline" onClick={() => signOut()}>
-              Logout
-            </Button>
-          </>
-        ) : (
-          <>
-            <Link href="/login">Login</Link>
-            <Link href="/signup">Signup</Link>
-          </>
-        )}
-      </div>
-    </div>
-  )
+    <Card className="rounded-none border-b shadow-none bg-background">
+      <CardHeader className="px-6 py-4">
+        <div className="flex flex-row items-center justify-between w-full">
+          <CardTitle className="font-bold text-lg">
+            <Link href="/" className="hover:underline">Rate My Study Spot</Link>
+          </CardTitle>
+          <div className="flex items-center gap-4">
+            {session ? (
+              <>
+                <span className="text-sm text-muted-foreground">Hi, {session.user?.name}</span>
+                <Button variant="outline" onClick={() => signOut()}>
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link href="/signup">Signup</Link>
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+    </Card>
+  );
 }

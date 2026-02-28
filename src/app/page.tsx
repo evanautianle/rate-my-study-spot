@@ -4,14 +4,9 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import SpotForm from "@/components/SpotForm";
 import SpotList, { Spot } from "@/components/SpotList";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-type Spot = {
-  _id: string;
-  name: string;
-  building: string;
-  ratings: any[];
-  comments: any[];
-};
+// Removed duplicate Spot type definition
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -40,21 +35,26 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-zinc-50 dark:bg-black p-8">
-      <h1 className="text-3xl font-bold mb-8 text-black dark:text-zinc-50">Study Spots</h1>
+    <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-background to-zinc-100 dark:to-zinc-900 p-8">
+      <Card className="w-full max-w-3xl mx-auto rounded-2xl shadow-lg border bg-white dark:bg-zinc-950">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-3xl font-bold text-center">Study Spots</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-2 space-y-8">
+          {/* Spot creation form for logged-in users */}
+          {status === "loading" ? null : session ? (
+            <SpotForm onCreated={fetchSpots} />
+          ) : null}
 
-      {/* Spot creation form for logged-in users */}
-      {status === "loading" ? null : session ? (
-        <SpotForm onCreated={fetchSpots} />
-      ) : null}
-
-      {loading ? (
-        <p>Loading...</p>
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
-      ) : (
-        <SpotList spots={spots} />
-      )}
+          {loading ? (
+            <p className="text-center text-muted-foreground">Loading...</p>
+          ) : error ? (
+            <p className="text-center text-red-500">{error}</p>
+          ) : (
+            <SpotList spots={spots} />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

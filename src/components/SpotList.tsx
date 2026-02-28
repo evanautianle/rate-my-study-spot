@@ -19,19 +19,30 @@ export default function SpotList({ spots }: { spots: Spot[] }) {
         <Link href={`/spots/${spot._id}`} key={spot._id} className="block">
           <Card className="hover:bg-zinc-100 dark:hover:bg-zinc-900 cursor-pointer transition">
             <CardContent className="p-4">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                {spot.name}
-                {spot.ratings.length > 0 && (
-                  <span className="text-base font-normal text-zinc-500">Avg: {(
-                    spot.ratings.reduce((sum, r) => sum + (r.value ?? 0), 0) / spot.ratings.length
-                  ).toFixed(1)}</span>
-                )}
-              </h2>
-              <p className="text-zinc-600 dark:text-zinc-300">Building: {spot.building}</p>
-              <p className="text-zinc-500 text-sm mt-2">Ratings: {spot.ratings.length} | Comments: {spot.comments.length}</p>
+              <div className="flex gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-20 h-20 bg-zinc-200 dark:bg-zinc-700 rounded-lg flex items-center justify-center">
+                    <svg className="w-10 h-10 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    {spot.name}
+                    {spot.ratings.length > 0 && (
+                      <span className="text-base font-normal text-zinc-500">Avg: {(
+                        spot.ratings.reduce((sum, r) => sum + (r.value ?? 0), 0) / spot.ratings.length
+                      ).toFixed(1)}</span>
+                    )}
+                  </h2>
+                  <p className="text-zinc-600 dark:text-zinc-300">Building: {spot.building}</p>
+                  <p className="text-zinc-500 text-sm mt-2">Ratings: {spot.ratings.length} | Comments: {spot.comments.length}</p>
+                </div>
+              </div>
               {/* Comment/rating form removed from homepage. Only available on SpotDetail page. */}
               {spot.comments.length > 0 && (
-                <div className="mt-6">
+                <div className="mt-6 ml-24">
                   <h3 className="text-lg font-medium mb-2">Comments</h3>
                   <ul className="space-y-2">
                     {spot.comments.slice(0, 2).map((comment, idx) => {

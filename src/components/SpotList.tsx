@@ -34,7 +34,7 @@ export default function SpotList({ spots }: { spots: Spot[] }) {
                 <div className="mt-6">
                   <h3 className="text-lg font-medium mb-2">Comments</h3>
                   <ul className="space-y-2">
-                    {spot.comments.map((comment, idx) => {
+                    {spot.comments.slice(0, 2).map((comment, idx) => {
                       // Find rating for this user if exists
                       const userRating = spot.ratings.find(r => r.userId?.toString() === comment.userId?.toString());
                       return (
@@ -55,6 +55,11 @@ export default function SpotList({ spots }: { spots: Spot[] }) {
                       );
                     })}
                   </ul>
+                  {spot.comments.length > 2 && (
+                    <p className="text-sm text-zinc-500 mt-2">
+                      +{spot.comments.length - 2} more comments
+                    </p>
+                  )}
                 </div>
               )}
             </CardContent>

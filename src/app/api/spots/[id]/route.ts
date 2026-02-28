@@ -25,7 +25,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
     const userId = user._id;
 
-    const spot = await Spot.findById(params.id);
+    const awaitedParams = typeof params.then === "function" ? await params : params;
+    const spot = await Spot.findById(awaitedParams.id);
     if (!spot) {
       return NextResponse.json({ error: "Spot not found" }, { status: 404 });
     }
